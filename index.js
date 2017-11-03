@@ -43,9 +43,14 @@ io.on('connection',function(socket){
         console.log("A user disconnected!");
     });
     socket.on('chat message',function(data){
-        io.emit('chat message',[data]);
         person = socket.username;
-        messages.push(data);
+        current_message  = {};
+        current_message['user'] = person;
+        current_message['message'] = data;
+        new_message = [];
+        new_message.push(current_message);
+        messages.push(current_message);
+        socket.broadcast.emit('chat message',new_message);
         redis_client.set('messages',JSON.stringify(messages));
     });
 });
