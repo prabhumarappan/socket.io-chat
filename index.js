@@ -27,8 +27,6 @@ redis_client.get('users',function(err,reply){
 });
 
 io.on('connection',function(socket){
-    console.log("A users connected!");
-    socket.broadcast.emit('newjoin',{});
     socket.on('ready',function(){
         socket.emit('chat message',messages);
     });
@@ -36,11 +34,21 @@ io.on('connection',function(socket){
     socket.on('send-nickname',function(nickname){
         socket.username = nickname;
         users.push(socket.username);
+        console.log(nickname + " connected!");
+        socket.broadcast.emit('newjoin',nickname);
         redis_client.set('users',JSON.stringify(users));
     });
 
+    socket.on('typing',function(){
+        socket.broadcast.emit('typing',socket.username+" is typing...");
+    });
+
+    socket.on('finished-typing',function(){
+        socket.broadcast.emit('typing');
+    })
+
     socket.on('disconnect',function(){
-        console.log("A user disconnected!");
+        console.log(socket.username+" disconnected!");
     });
     socket.on('chat message',function(data){
         person = socket.username;

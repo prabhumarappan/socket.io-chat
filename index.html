@@ -8,13 +8,15 @@
       form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
       form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin-bottom: 80px; padding: 0; }
+      #messages { list-style-type: none; margin-bottom: 30px; padding: 0; }
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
+      #typing { height: 60px; width: 100%; position: relative; top:0%; border: 1px solid black; }
     </style>
   </head>
   <body>
     <ul id="messages"></ul>
+    <div id="typing"></div>
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
@@ -22,7 +24,9 @@
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
         var socket = io();
-        socket.emit("send-nickname",prompt("Enter a nickname! : "));
+        var username = prompt("Enter a nickname! : ")
+        socket.emit("send-nickname",username);
+        $(document).attr("title", username);
         socket.emit('ready');
 
         $("form").submit(function(){
@@ -34,6 +38,20 @@
             $('html, body').animate({ scrollTop: n }, 50);
             return false;
         });
+
+        $("#m").keypress(function(){
+          socket.emit('typing');
+        });
+
+        var timeout = null;
+
+        $("#m").keyup(function(){
+          clearTimeout(timeout);
+          timeout = setTimeout(function(){
+            socket.emit('finished-typing');
+          },1000);
+        });
+
         socket.on('chat message',function(data){
             messages = data;
             for(var i =0;i<messages.length;i++){
@@ -43,8 +61,19 @@
                 $('html, body').animate({ scrollTop: n }, 50);
             }
         });
+
+        socket.on('typing',function(data){
+          if(data){
+            $("#typing").html(data);
+          }
+          else{
+            $("#typing").html("");
+          }
+        });
+
         socket.on('newjoin',function(data){
-            $("#messages").append($('<li>').text("Someone has joined the chat!"));
+            text = data + " has joined the chat!"
+            $("#messages").append($('<li>').text(text));
         });
     </script>
   </body>
