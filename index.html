@@ -23,58 +23,67 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
-        var socket = io();
-        var username = prompt("Enter a nickname! : ")
-        socket.emit("send-nickname",username);
-        $(document).attr("title", username);
-        socket.emit('ready');
-
-        $("form").submit(function(){
-            socket.emit('chat message',$("#m").val());
-            own_message = "you say : "+$("#m").val();
-            $("#m").val('');
-            $("#messages").append($('<li>').text(own_message));
-            var n = $(document).height();
-            $('html, body').animate({ scrollTop: n }, 50);
-            return false;
-        });
-
-        $("#m").keypress(function(){
-          socket.emit('typing');
-        });
-
-        var timeout = null;
-
-        $("#m").keyup(function(){
-          clearTimeout(timeout);
-          timeout = setTimeout(function(){
-            socket.emit('finished-typing');
-          },1000);
-        });
-
-        socket.on('chat message',function(data){
-            messages = data;
-            for(var i =0;i<messages.length;i++){
-                new_message = messages[i].user + " says: " + messages[i].message
-                $("#messages").append($('<li>').text(new_message));
-                var n = $(document).height();
-                $('html, body').animate({ scrollTop: n }, 50);
+        $(document).ready(function(){
+          var socket = io();
+          var channel = prompt('Enter a channel to join : ');
+          socket.emit('join-channel',channel);
+          var username = prompt("Enter a nickname! : ")
+          socket.emit("send-nickname",username);
+          $(document).attr("title", username);
+          socket.emit('ready');
+  
+          $("form").submit(function(){
+              socket.emit('chat message',$("#m").val());
+              own_message = "you say : "+$("#m").val();
+              $("#m").val('');
+              $("#messages").append($('<li>').text(own_message));
+              var n = $(document).height();
+              $('html, body').animate({ scrollTop: n }, 50);
+              return false;
+          });
+  
+          $("#m").keypress(function(){
+            socket.emit('typing',function(){
+            });
+          });
+  
+          var timeout = null;
+  
+          $("#m").keyup(function(){
+            clearTimeout(timeout);
+            timeout = setTimeout(function(){
+              socket.emit('finished-typing');
+            },1000);
+          });
+  
+          socket.on('chat message',function(data){
+              messages = data;
+              for(var i =0;i<messages.length;i++){
+                  new_message = messages[i].user + " says: " + messages[i].message
+                  $("#messages").append($('<li>').text(new_message));
+                  var n = $(document).height();
+                  $('html, body').animate({ scrollTop: n }, 50);
+              }
+          });
+  
+          socket.on('typing',function(data){
+            if(data){
+              $("#typing").html(data);
             }
+            else{
+              $("#typing").html("");
+            }
+          });
+  
+          socket.on('newjoin',function(data){
+              text = data + " has joined the chat!"
+              $("#messages").append($('<li>').text(text));
+          });
+
+
+
         });
 
-        socket.on('typing',function(data){
-          if(data){
-            $("#typing").html(data);
-          }
-          else{
-            $("#typing").html("");
-          }
-        });
-
-        socket.on('newjoin',function(data){
-            text = data + " has joined the chat!"
-            $("#messages").append($('<li>').text(text));
-        });
     </script>
   </body>
 </html>
