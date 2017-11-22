@@ -65,6 +65,8 @@ io.on('connection',function(socket){
 
     socket.on('disconnect',function(){
         console.log(socket.username+" disconnected!");
+        users.pop(socket.username);
+        redis_client.set(channel+':users',JSON.stringify(users));
     });
     socket.on('chat message',function(data){
         person = socket.username;
